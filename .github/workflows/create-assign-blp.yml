@@ -38,5 +38,5 @@ jobs:
           scope: Subscription
           azureSubscriptionID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           assignmentName: ${{ secrets.assignmentName }}
-          blueprintName: ${{ secrets.blueprintName }}
+          blueprintName: ${{ secrets.BLUEPRINTNAME }}
           AssignmentFilePath: Blueprints/assign.json
