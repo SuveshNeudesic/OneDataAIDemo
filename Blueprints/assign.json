@@ -3,15 +3,15 @@
         "type": "userAssigned",
         "tenantId": "687f51c3-0c5d-4905-84f8-97c683a5b9d1",
         "userAssignedIdentities": {
-            "/subscriptions/f48d9107-72e2-4044-b1c3-f6c32c6b0de7/resourcegroups/neu-dev-iac-mk1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/neu-dev-iac-mgid": {}
+            "/subscriptions/1b4aa0be-c63d-43d1-9319-5fd2d7ced031/resourcegroups/rgOneDataAI1001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/ManagedIdentityOneDataAI": {}
         }
     },
     "location": "eastus",
     "properties": {
-        "blueprintId": "/subscriptions/f48d9107-72e2-4044-b1c3-f6c32c6b0de7/providers/Microsoft.Blueprint/blueprints/neu-blp-gitactions-mk1",
+        "blueprintId": "/subscriptions/1b4aa0be-c63d-43d1-9319-5fd2d7ced031/providers/Microsoft.Blueprint/blueprints/neu-blp-gitactions-mk1",
         "resourceGroups": {
             "ResourceGroup": {
-              "name": "neu-dev-iac-mk1",
+              "name": "rgOneDataAI1001",
               "location": "eastus"
             }
         },
@@ -20,7 +20,7 @@
         },    
         "parameters": {
           "customerCode": {
-            "value": "neu",
+            "value": "suv",
             "metadata": {
               "description": "3 or 4 character identifier used in resource naming conventions.  (Ex. 'imc')"
             }
@@ -51,7 +51,7 @@
           },
           "tags": {
             "value": {
-              "Owner" : "Abhinav Sreesan",
+              "Owner" : "Suvesh Sonker",
               "Environment" : "Test",            
               "Description": "Test Environment for Neudesic IP",
               "Market" : "DIG",
@@ -69,7 +69,7 @@
             "value": "DataAnalyticsTeam@neudesic.onmicrosoft.com"
           },
           "managedIdentityName": {
-            "value": "neu-dev-iac-mgid"
+            "value": "ManagedIdentityOneDataAI"
           }
         }
     }
