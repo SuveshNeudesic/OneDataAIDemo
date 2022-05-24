@@ -1,0 +1,60 @@
+{
+    "properties": {
+      "description": "BluePrint Deployment using GitActions",
+      "targetScope": "subscription",
+      "parameters": {
+          "location": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Azure Region to build the resources. (Ex. 'westus2')"
+            }
+          },
+          "tags": {
+            "type": "object"
+          },
+          "environment": {
+            "type": "string",
+            "metadata": {
+              "description": "3 or 4 character abbreviation for the environment.  Used in resource naming conventions. (Ex. 'dev')"
+            }
+          },
+          "adminGroupEmail": {
+            "type": "string"
+          },
+          "teamGroupEmail": {
+            "type": "string"
+          },
+          "customerCode": {
+            "type": "string",
+            "metadata": {
+              "description": "3 or 4 character identifier used in resource naming conventions.  (Ex. 'neu')"
+            }
+          },
+          "solutionCode": {
+            "type": "string",
+            "metadata": {
+              "description": "2 to 4 character identifier for the name of the project.  (Ex. 'da')"
+            }
+          },
+          "locationCode": {
+            "type": "string",
+            "metadata": {
+              "description": "2 to 4 character identifier for the location of the resources used in the naming convention.  (Ex. 'wu2')"
+            }
+          },
+          "sqlAdminUsername": {
+            "type": "string"
+          },
+          "managedIdentityName": {
+            "type": "string"
+          }
+      },
+      "resourceGroups": {
+        "ResourceGroup":  {
+          "type": "object"
+        }
+      },
+      "blueprintName": "neu-blp-gitactions-mk1"
+    }
+  }
+  

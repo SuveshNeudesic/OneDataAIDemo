@@ -1,0 +1,141 @@
+{
+  "kind": "template",
+  "properties": {
+    "displayName": "SQL Server with Elastic Pool",
+    "dependsOn": [
+      "arm-key-vault"
+    ],
+    "template": {
+      "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "customerCode": {
+          "type": "string"
+        },
+        "solutionCode": {
+          "type": "string"
+        },
+        "SQLadministratorLogin": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string",
+          "defaultValue": "[resourceGroup().location]",
+          "metadata": {
+            "description": "Location for all resources."
+          }
+        },
+        "locationCode": {
+          "type": "string"
+        },
+        "SQLserverNamePrimary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "object"
+        },
+        "sqlAdminPass":{
+          "type": "securestring"
+        }
+      },
+      "variables": {
+        "skuName": "BasicPool",
+        "skuTier": "Basic",
+        "skuCapacity": "50",
+        "zoneRedundant": "[if(equals(toLower(parameters('environment')), 'prod'), true(), false())]",
+        "dbNamePrefix": "[format('{0}-{1}-{2}-{3}-',parameters('customerCode'),parameters('environment'),parameters('locationCode'),parameters('solutionCode'))]",
+        "dbNameList": [
+          "[concat(variables('dbNamePrefix'),'dw-db-01')]",
+          "[concat(variables('dbNamePrefix'),'retail-db-01')]",
+          "[concat(variables('dbNamePrefix'),'fwk-db-01')]",
+          "[concat(variables('dbNamePrefix'),'stg-db-01')]"
+        ]
+      },
+      "resources": [
+        {
+          "apiVersion": "2021-02-01-preview",
+          "type": "Microsoft.Sql/servers",
+          "location": "[parameters('location')]",
+          "tags": "[parameters('tags')]",
+          "name": "[parameters('SQLserverNamePrimary')]",
+          "properties": {
+            "administratorLogin": "[parameters('SQLadministratorLogin')]",
+            "administratorLoginPassword": "[parameters('sqlAdminPass')]",
+            "version": "12.0"
+          },
+          "identity": {
+            "type": "SystemAssigned"
+          },
+          "resources": [
+            {
+              "type": "firewallRules",
+              "apiVersion": "2015-05-01-preview",
+              "name": "AllowAllWindowsAzureIps",
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('SQLserverNamePrimary'))]"
+              ],
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+              }
+            },
+            {
+              "type": "firewallRules",
+              "apiVersion": "2015-05-01-preview",
+              "name": "AllowAllIPs",
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', parameters('SQLserverNamePrimary'))]"
+              ],
+              "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "255.255.255.255"
+              }
+            }
+          ]
+        }
+      ],
+      "outputs": {
+      }
+    },
+    "resourceGroup": "ResourceGroup",
+    "parameters": {
+      "customerCode": {
+        "value": "[parameters('customerCode')]"
+      },
+      "solutionCode": {
+        "value": "[parameters('solutionCode')]"
+      },
+      "SQLadministratorLogin": {
+        "value": "[parameters('sqlAdminUsername')]"
+      },
+      "environment": {
+        "value": "[parameters('environment')]"
+      },
+      "location": {
+        "value": "[parameters('location')]"
+      },
+      "locationCode": {
+        "value": "[parameters('locationCode')]"
+      },
+      "SQLserverNamePrimary": {
+        "value": "[format('{0}{1}{2}{3}sql01',parameters('customerCode'),parameters('environment'),parameters('locationCode'),parameters('solutionCode'))]"
+      },
+      "tags": {
+        "value": "[parameters('tags')]"
+      },
+      "sqlAdminPass": {
+        "reference": {
+            "keyVault": {
+              "id": "[artifacts('arm-key-vault').outputs.keyvaultId]"
+            },
+            "secretName": "SQLadminPass"
+          }
+      }
+    }
+  },
+  "type": "Microsoft.Blueprint/blueprints/artifacts",
+  "name": "defaultName"
+}

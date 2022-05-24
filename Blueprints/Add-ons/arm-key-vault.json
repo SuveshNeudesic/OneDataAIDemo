@@ -1,0 +1,178 @@
+{
+  "kind": "template",
+  "properties": {
+    "displayName": "Key Vault",
+    "description": "Adds Key Vault for use in the data analytics instance",
+    "template": {
+      "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "customerCode": {
+          "type": "String"
+        },
+        "solutionCode": {
+          "type": "String"
+        },
+        "locationCode": {
+          "type": "String"
+        },
+        "environment": {
+          "type": "String"
+        },
+        "location": {
+          "defaultValue": "[resourceGroup().location]",
+          "type": "string"
+        },
+        "tags": {
+          "type": "object",
+          "defaultValue": {}
+        },
+        "tenantId": {
+          "defaultValue": "[subscription().tenantId]",
+          "type": "string"
+        },
+        "SQLserverNamePrimary": {
+          "type": "string"
+        },
+        "managedIdentityName": {
+          "type": "string"
+        }
+      },
+      "variables": {
+        "vaultName": "[format('{0}-{1}-{2}-{3}-kv-01',parameters('customerCode'),parameters('environment'),parameters('locationCode'),parameters('solutionCode'))]",
+        "dbNamePrefix": "[format('{0}-{1}-{2}-{3}-',parameters('customerCode'),parameters('environment'),parameters('locationCode'),parameters('solutionCode'))]",
+        "dwdbName":"[concat(variables('dbNamePrefix'),'dw-db-01')]",
+        "retaildbName":"[concat(variables('dbNamePrefix'),'retail-db-01')]",
+        "fwkdbName":"[concat(variables('dbNamePrefix'),'fwk-db-01')]",
+        "stgdbName":"[concat(variables('dbNamePrefix'),'stg-db-01')]",
+        "SQLServerName": "[parameters('SQLserverNamePrimary')]"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.KeyVault/vaults",
+          "apiVersion": "2016-10-01",
+          "name": "[variables('vaultName')]",
+          "location": "[parameters('location')]",
+          "properties": {
+            "sku": {
+              "family": "A",
+              "name": "standard"
+            },
+            "tenantId": "[parameters('tenantId')]",
+            "accessPolicies": [
+                      {
+                          "tenantId": "[parameters('tenantId')]",
+                          "objectId": "[reference(ResourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')),'2018-11-30','Full').properties.principalId]",
+                          "permissions": {
+                              "secrets": [
+                                  "get",
+                                  "list",
+                                  "set",
+                                  "delete",
+                                  "recover",
+                                  "backup",
+                                  "restore"
+                              ]
+                          }
+                      }
+                  ],
+            "enabledForDeployment": true,
+            "enabledForDiskEncryption": true,
+            "enabledForTemplateDeployment": true  
+          }
+        },
+        {
+          "type": "Microsoft.Resources/deploymentScripts",
+          "apiVersion": "2020-10-01",
+          "name": "AddSecret",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+              "[resourceId('Microsoft.KeyVault/vaults', variables('vaultName'))]"
+          ],
+          "identity": {
+            "type": "UserAssigned",
+            "userAssignedIdentities": {
+              "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]": {
+            
+              }
+            }
+          },
+          "kind": "AzurePowerShell",
+          "properties": {
+              "azPowershellVersion": "6.2",
+              "arguments": "[format('-vaultName {0} -SQLServerName {1} -dwdbName {2} -retaildbName {3} -fwkdbName {4} -stgdbName {5}',variables('vaultName'),variables('SQLServerName'), variables('dwdbName'), variables('retaildbName'), variables('fwkdbName'), variables('stgdbName'))]",
+              "scriptContent": "
+               param([string] $vaultName,[string] $SQLServerName,[string] $dwdbName,[string] $retaildbName,[string] $fwkdbName,[string] $stgdbName)
+                $charlist = [char]94..[char]126 + [char]65..[char]90 +  [char]47..[char]57
+                 $pwLength = (1..10 | Get-Random) + 24  
+                 $pwdList = @()
+                 For ($i = 0; $i -lt $pwlength; $i++) {
+                 $pwdList += $charList | Get-Random
+                 }
+                 $pass = -join $pwdList
+                $SecurePass = $pass | ConvertTo-SecureString -AsPlainText -Force
+                $SecureUser = 'SQLAdmin' | ConvertTo-SecureString -AsPlainText -Force  
+
+                $DWCon = 'Server=tcp:'+$SQLServerName+'.database.windows.net,1433;Initial Catalog='+$dwdbName+';Persist Security Info=False;User ID=SQLAdmin;Password='+$pass+';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'       
+                $SecureDWCon =$DWCon | ConvertTo-SecureString -AsPlainText -Force
+
+                $RetailCon = 'Server=tcp:'+$SQLServerName+'.database.windows.net,1433;Initial Catalog='+$retaildbName+';Persist Security Info=False;User ID=SQLAdmin;Password='+$pass+';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'       
+                $SecureRetailCon =$RetailCon | ConvertTo-SecureString -AsPlainText -Force
+
+                $FwkCon = 'Server=tcp:'+$SQLServerName+'.database.windows.net,1433;Initial Catalog='+$fwkdbName+';Persist Security Info=False;User ID=SQLAdmin;Password='+$pass+';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'       
+                $SecureFwkCon =$FwkCon | ConvertTo-SecureString -AsPlainText -Force
+
+                $StgCon = 'Server=tcp:'+$SQLServerName+'.database.windows.net,1433;Initial Catalog='+$stgdbName+';Persist Security Info=False;User ID=SQLAdmin;Password='+$pass+';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'       
+                $StgFwkCon =$StgCon | ConvertTo-SecureString -AsPlainText -Force
+
+                Set-AzKeyVaultSecret -VaultName $vaultName -Name 'SQLAdminPass' -SecretValue $SecurePass
+                Set-AzKeyVaultSecret -VaultName $vaultName -Name 'SQLAdminUser' -SecretValue $SecureUser
+                Set-AzKeyVaultSecret -VaultName $vaultName -Name 'DataWarehouseConnectionString' -SecretValue $SecureDWCon
+                Set-AzKeyVaultSecret -VaultName $vaultName -Name 'RetailConnectionString' -SecretValue $SecureRetailCon
+                Set-AzKeyVaultSecret -VaultName $vaultName -Name 'FrameworkConnectionString' -SecretValue $SecureFwkCon
+                Set-AzKeyVaultSecret -VaultName $vaultName -Name 'StageConnectionString' -SecretValue $StgFwkCon
+             ",
+             "cleanupPreference": "OnSuccess",
+             "retentionInterval": "P1D"
+          }
+        }
+      ],
+      "outputs": {
+        "keyvaultId": {
+          "type": "String",
+          "value": "[resourceId('Microsoft.Keyvault/vaults',variables('vaultName'))]"
+        }
+      }
+    },
+    "resourceGroup": "ResourceGroup",
+    "parameters": {
+      "customerCode": {
+        "value": "[parameters('customerCode')]"
+      },
+      "solutionCode": {
+        "value": "[parameters('solutionCode')]"
+      },
+      "location": {
+        "value": "[parameters('location')]"
+      },
+      "locationCode": {
+        "value": "[parameters('locationCode')]"
+      },
+      "environment": {
+        "value": "[parameters('environment')]"
+      },
+      "tenantId": {
+        "value": "[subscription().tenantId]"
+      },
+      "tags": {
+        "value": "[parameters('tags')]"
+      },
+      "SQLserverNamePrimary": {
+        "value": "[format('{0}{1}{2}{3}sql01',parameters('customerCode'),parameters('environment'),parameters('locationCode'),parameters('solutionCode'))]"
+      },
+      "managedIdentityName": {
+        "value": "[parameters('managedIdentityName')]"
+      }
+    }
+  }
+}

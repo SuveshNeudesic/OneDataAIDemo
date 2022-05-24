@@ -1,0 +1,33 @@
+name: DeployRunbook
+on:  
+    workflow_dispatch:
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:  
+  DeployRunbooks:
+    environment: neu-data-ai-platform-prod-rg
+    name: Create Runbook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2      
+      
+      - name: Azure Login        
+        uses: azure/login@v1
+        with:
+          creds: ${{secrets.AZURE_CREDENTIALS}}
+          enable-AzPSSession: true
+      - name: Set PSRepo
+        shell: pwsh
+        run: |
+             Set-PSRepository PSGallery -InstallationPolicy Trusted
+      - name: Install Modules
+        shell: pwsh
+        run: |
+             Install-Module Az.Accounts
+             Install-Module Az.Automation
+             Install-Module Az.Resources
+             Install-Module Az.Sql
+             Install-Module Az.Synapse
+      - name: Execute Power Shell
+        shell: pwsh
+        run: |
+              .\Runbook\DeployRunBook.ps1 '${{ secrets.AA_NAME }}' '${{ secrets.RG_NAME }}' '${{ secrets.WORKSPACE_NAME }}' '${{ secrets.POOL_NAME }}' '${{ secrets.SERVER_NAME }}' '${{ secrets.AAS_NAME }}' '${{ secrets.KV_NAME }}'

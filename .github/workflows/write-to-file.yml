@@ -1,0 +1,87 @@
+name: Write To Files
+
+on:
+  workflow_dispatch:
+   inputs:
+    StorageAccount_Name:
+        description: 'Storage Account Name'
+        required: true
+        
+    StorageContainer_Name:
+        description: 'Storage Container Name'
+        required: true
+        
+    KeyVault_Name:
+        description: 'Key Vault Name'
+        required: true
+    
+    SparkPool_Name:
+        description: 'Spark Pool Name'
+        required: true
+        
+    DatabricksWorkspace_URL:
+        description: 'Databricks Workspace URL Name'
+        required: true
+        
+    DatabricksCluster_ID:
+        description: 'Databricks Cluster ID'
+        required: true
+        
+    LogicApp_URL:
+        description: 'Logic APP URL'
+        required: true
+
+env:
+  Params_folder: './Blueprints/params.yml'
+  DW_Connection_String: 'DataWarehouseConnectionString'
+  FW_Connection_String: 'FrameworkConnectionString'
+  Retail_Connection_String: 'RetailConnectionString'
+  Stage_Connection_String: 'StageConnectionString'
+  SuperMaster_Dbricks_Schedule: 'Daily'
+  
+  
+
+jobs:
+  Move_Files:
+    name: Create Params File
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Git User
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - uses: DamianReeves/write-file-action@master
+        with:
+          path: ${{ env.Params_folder }}
+          contents: |
+            AzureStorageAccountName: ${{ github.event.inputs.StorageAccount_Name}}
+            AzureStorageContainerName: ${{ github.event.inputs.StorageContainer_Name}}
+            KeyVaultName: ${{ github.event.inputs.KeyVault_Name}}
+            SparkPoolName: ${{ github.event.inputs.SparkPool_Name}}
+            DataBricksURL: ${{ github.event.inputs.DatabricksWorkspace_URL}}
+            DataBricksClusterID: ${{ github.event.inputs.DatabricksCluster_ID}}
+            AzureSqlDW_properties_typeProperties_connectionString_secretName: ${{ env.DW_Connection_String}}
+            AzureSqlFrameworkDB_properties_typeProperties_connectionString_secretName: ${{ env.FW_Connection_String}}
+            AzureSqlRetailService_properties_typeProperties_connectionString_secretName: ${{ env.Retail_Connection_String}}
+            DataWarehouseSQL_properties_typeProperties_connectionString_secretName: ${{ env.DW_Connection_String}}
+            SmiStageSqlDatabase_properties_typeProperties_connectionString_secretName: ${{ env.Stage_Connection_String}}
+            SuperMasterDatabricksWeekly_properties_SuperMasterDatabricks_parameters_PipelineScheduleName: ${{ env.SuperMaster_Dbricks_Schedule}}
+            SuperMasterParquetWeekly_properties_SuperMasterParquet_parameters_PipelineScheduleName: ${{ env.SuperMaster_Dbricks_Schedule}}
+            SuperMasterSQLWeekly_properties_SuperMasterSQL_parameters_PipelineScheduleName: ${{ env.SuperMaster_Dbricks_Schedule}}
+            SendAlertLogicAppsHTTPUrl: ${{ github.event.inputs.LogicApp_URL}}
+          write-mode: overwrite
+      
+      - name: Commit files
+        run: |
+          git commit -m "Updated Params" -a
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.PA_TOKEN }}
+          branch: ${{ github.ref }}

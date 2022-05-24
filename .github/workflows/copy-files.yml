@@ -1,0 +1,84 @@
+name: Copy Files
+
+on:
+
+  workflow_dispatch:
+   inputs:
+    KeyVault_Deploy:
+        type: choice
+        description: 'Are you Deploying Key Vault?'
+        options: 
+        - 'yes'
+        - 'no'
+        default: 'yes'
+        required: true
+        
+    SQLServer_Deploy:
+        type: choice
+        description: 'Are you Deploying SQL Server?'
+        options: 
+        - 'yes'
+        - 'no'
+        default: 'yes'
+        required: true
+        
+    Synapse_Deploy:
+        type: choice
+        description: 'Are you Deploying Synapse?'
+        options: 
+        - 'yes'
+        - 'no'
+        default: 'yes'
+        required: true
+
+env:
+  Artifacts_Folder: './Blueprints/Artifacts'
+  Addons_Folder: './Blueprints/Add-ons'
+  KeyVault_File: 'arm-key-vault.json'
+  SQLServer_File: 'arm-sql-server.json'
+  Synapse_File: 'arm-synpase.json'
+
+
+jobs:
+
+  Move_Files: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Commit files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Check Key Vault file existence
+      id: check_kv_files
+      uses: andstor/file-existence-action@v1
+      with:
+        files: "${{env.Artifacts_Folder}}/${{env.KeyVault_File}}"
+        
+    - if: ${{ github.event.inputs.KeyVault_Deploy == 'no' && steps.check_kv_files.outputs.files_exists == 'true'}} 
+      name: move the key vault file
+      run: |
+            mv "$Artifacts_Folder/$KeyVault_File" "$Addons_Folder/$KeyVault_File"
+            git add "$Addons_Folder/$KeyVault_File"
+            
+    - if: ${{ github.event.inputs.SQLServer_Deploy == 'no'}} 
+      name: move the key vault file
+      run: |
+            mv "$Artifacts_Folder/$SQLServer_File" "$Addons_Folder/$SQLServer_File"
+            git add "$Addons_Folder/$SQLServer_File"
+            
+    - if: ${{ github.event.inputs.Synapse_Deploy == 'no'}} 
+      name: move the key vault file
+      run: |
+            mv "$Artifacts_Folder/$Synapse_File" "$Addons_Folder/$Synapse_File"
+            git add "$Addons_Folder/$Synapse_File"
+            
+    - name: Commit files
+      run: |
+        git commit -m "Add changes" -a
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.PA_TOKEN }}

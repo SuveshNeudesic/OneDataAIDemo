@@ -1,0 +1,76 @@
+{
+    "identity": {
+        "type": "userAssigned",
+        "tenantId": "687f51c3-0c5d-4905-84f8-97c683a5b9d1",
+        "userAssignedIdentities": {
+            "/subscriptions/f48d9107-72e2-4044-b1c3-f6c32c6b0de7/resourcegroups/neu-dev-iac-mk1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/neu-dev-iac-mgid": {}
+        }
+    },
+    "location": "eastus",
+    "properties": {
+        "blueprintId": "/subscriptions/f48d9107-72e2-4044-b1c3-f6c32c6b0de7/providers/Microsoft.Blueprint/blueprints/neu-blp-gitactions-mk1",
+        "resourceGroups": {
+            "ResourceGroup": {
+              "name": "neu-dev-iac-mk1",
+              "location": "eastus"
+            }
+        },
+        "locks": {
+            "mode": "none"
+        },    
+        "parameters": {
+          "customerCode": {
+            "value": "neu",
+            "metadata": {
+              "description": "3 or 4 character identifier used in resource naming conventions.  (Ex. 'imc')"
+            }
+          },
+          "solutionCode": {
+            "value":"da",
+            "metadata": {
+              "description": "2 to 4 character identifier for the name of the project.  (Ex. 'da')"
+            }
+          },
+          "environment": {
+            "value": "tst",
+            "metadata": {
+              "description": "3 or 4 character abbreviation for the environment.  Used in resource naming conventions. (Ex. 'dev')"
+            }
+          },
+          "location":{
+            "value":"eastus",
+            "metadata": {
+              "description": "Name of the Azure Region to build the resources. (Ex. 'southcentralus')"
+            }
+          },
+          "locationCode": {
+            "value":"eus",
+            "metadata": {
+              "description":"2 to 4 character identifier for the location of the resources used in the naming convention.  (Ex. 'scus')"
+            }
+          },
+          "tags": {
+            "value": {
+              "Owner" : "Abhinav Sreesan",
+              "Environment" : "Test",            
+              "Description": "Test Environment for Neudesic IP",
+              "Market" : "DIG",
+              "Practice" : "Data & AI Innovation Business Group",
+              "Project": "Neudesic ONE Data & AI Accelerator"
+            }
+          },
+          "sqlAdminUsername": {
+            "value": "SQLAdmin"
+          },
+          "adminGroupEmail": {
+            "value": "DataAnalyticsAdmin@neudesic.onmicrosoft.com"
+          },
+          "teamGroupEmail": {
+            "value": "DataAnalyticsTeam@neudesic.onmicrosoft.com"
+          },
+          "managedIdentityName": {
+            "value": "neu-dev-iac-mgid"
+          }
+        }
+    }
+  }
